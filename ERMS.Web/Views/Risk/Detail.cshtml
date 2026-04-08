@@ -1,0 +1,259 @@
+@model ERMS.Web.Models.RiskResponse
+@using ERMS.Web.Helpers
+@{
+    ViewData["Title"] = "Risk Details";
+    var userRole = SessionHelper.GetRole(Context.Session, Model.BUId);
+    bool isAdmin = ViewBag.IsAdmin ?? false;
+    bool isOwner = userRole == "O" && Model.CreatedBy == ViewBag.CurrentUserId;
+    bool isChamp = userRole == "C";
+}
+<div class="mb-4"><a href="/Risk/Index" class="btn btn-outline-secondary rounded-pill"><i class="bi bi-arrow-left me-1"></i>Back</a></div>
+<div class="row g-4">
+<div class="col-lg-8">
+    <div class="card mb-4"><div class="card-header d-flex justify-content-between align-items-center"><h5 class="mb-0" id="riskTitle">#@Model.RiskId - @Model.RiskTitle</h5><span class="badge rounded-pill @(Model.Status == "Closed" ? "bg-dark" : "bg-primary")" id="statusBadge">@Model.Status</span></div><div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-4"><strong>BU:</strong><br/><span id="dBU">@Model.BUName</span></div>
+            <div class="col-md-4"><strong>FY:</strong><br/><span id="dFY">@Model.FYName</span></div>
+            <div class="col-md-4"><strong>Category:</strong><br/><span id="dCat">@Model.RiskCatName</span></div>
+            <div class="col-md-4"><strong>Sub-Category:</strong><br/><span id="dSubCat">@Model.RiskSubCatName</span></div>
+            <div class="col-md-4"><strong>Function:</strong><br/><span id="dFunc">@Model.FunctionName</span></div>
+            <div class="col-md-4"><strong>Impact / Likelihood:</strong><br/><span id="dImpact" class="badge">@Model.ImpactLevel</span> / <span id="dLike" class="badge">@Model.Likelihood</span></div>
+            <div class="col-12"><strong>Description:</strong><br/><p id="dDesc" class="mt-1">@Model.Description</p></div>
+            <div class="col-md-6"><strong>Created by:</strong><br/><span id="dCreatedBy">@Model.CreatedByName</span></div>
+            <div class="col-md-6"><strong>Reviewed by:</strong><br/><span id="dReviewedBy">@(Model.ReviewedByName ?? "N/A")</span></div>
+        </div>
+    </div></div>
+    <div class="card mb-4"><div class="card-header"><h6 class="mb-0"><i class="bi bi-clock-history me-2"></i>History Timeline</h6></div><div class="card-body" id="historyBody"><p class="text-muted">Loading...</p></div></div>
+
+    <!-- Wizard extension sections -->
+    <div class="card mb-4" id="peopleCard" style="display:none;">
+        <div class="card-header"><h6 class="mb-0"><i class="bi bi-people me-2"></i>People Overview</h6></div>
+        <div class="card-body" id="peopleBody"></div>
+    </div>
+    <div class="card mb-4" id="assessmentCard" style="display:none;">
+        <div class="card-header"><h6 class="mb-0"><i class="bi bi-clipboard-check me-2"></i>Risk Assessment</h6></div>
+        <div class="card-body" id="assessmentBody"></div>
+    </div>
+    <div class="card mb-4" id="ratingsCard" style="display:none;">
+        <div class="card-header"><h6 class="mb-0"><i class="bi bi-bar-chart me-2"></i>Quarter Ratings</h6></div>
+        <div class="card-body" id="ratingsBody"></div>
+    </div>
+    <div class="card mb-4" id="attachmentsCard" style="display:none;">
+        <div class="card-header"><h6 class="mb-0"><i class="bi bi-paperclip me-2"></i>Attachments</h6></div>
+        <div class="card-body" id="attachmentsBody"></div>
+    </div>
+
+</div>
+<div class="col-lg-4">
+    <!-- Action bar at bottom of detail page -->
+    <div class="card mb-4 shadow-sm" style="border-radius: 12px; overflow: hidden;">
+        <div class="card-header py-3 border-bottom-0" style="background: rgba(255, 255, 255, 0.03);">
+            <h6 class="mb-0 fw-bold"><i class="bi bi-lightning-charge me-2 text-warning"></i>Available Actions</h6>
+        </div>
+        <div class="card-body">
+            @{
+                bool hasActions = false;
+            }
+            <div class="action-bar d-flex flex-column gap-3">
+
+                @* Owner actions — Draft or RevisionRequired only *@
+                @if ((isOwner || isAdmin) &&
+                     (Model.Status == "Draft" || Model.Status == "RevisionRequired"))
+                {
+                    hasActions = true;
+                    <a href="/Risk/Edit/@Model.RiskId" class="btn btn-primary rounded-pill w-100 text-start px-4 py-2" style="transition: all 0.3s ease;">
+                        <i class="bi bi-pencil me-2"></i> Edit Risk Details
+                    </a>
+                    <button class="btn btn-success rounded-pill w-100 text-start px-4 py-2" style="transition: all 0.3s ease;" onclick="submitRisk(@Model.RiskId)">
+                        <i class="bi bi-send me-2"></i> Submit for Review
+                    </button>
+                }
+
+                @* Champion actions — Submitted only *@
+                @if ((isChamp || isAdmin) &&
+                     (Model.Status == "Submitted" || Model.Status == "UnderReview"))
+                {
+                    hasActions = true;
+                    <a href="/Risk/Review/@Model.RiskId" class="btn btn-warning text-dark rounded-pill w-100 text-start px-4 py-2" style="transition: all 0.3s ease;">
+                        <i class="bi bi-clipboard-check me-2"></i> Review Risk
+                    </a>
+                }
+
+                @* Close action — Champion or Admin, Approved only *@
+                @if ((isChamp || isAdmin) && Model.Status == "Approved")
+                {
+                    hasActions = true;
+                    <button class="btn btn-secondary rounded-pill w-100 text-start px-4 py-2" style="transition: all 0.3s ease;" onclick="closeRisk(@Model.RiskId)">
+                        <i class="bi bi-x-circle me-2"></i> Close Risk
+                    </button>
+                }
+
+                @* Completed / Closed state *@
+                @if (Model.Status == "Closed")
+                {
+                    hasActions = true;
+                    <div class="text-center p-3 rounded" style="background: rgba(40, 167, 69, 0.1); border: 1px dashed rgba(40, 167, 69, 0.4);">
+                        <i class="bi bi-check2-circle text-success fs-2 mb-2"></i>
+                        <h6 class="text-success fw-bold mb-1">Risk Closed</h6>
+                        <small class="text-muted d-block">This risk requires no further action.</small>
+                    </div>
+                }
+
+                @* Viewer — no action buttons, read-only message *@
+                @if (userRole == "V" && Model.Status != "Closed")
+                {
+                    hasActions = true;
+                    <div class="d-flex align-items-center text-muted p-3 bg-light rounded bg-opacity-10">
+                        <i class="bi bi-eye fs-4 me-3 text-secondary"></i>
+                        <div>
+                            <span class="fw-semibold d-block">View-Only Access</span>
+                            <small>You can view this risk, but cannot modify it.</small>
+                        </div>
+                    </div>
+                }
+                
+                @if (!isOwner && !isChamp && !isAdmin && userRole == "N" && Model.Status != "Closed")
+                {
+                    hasActions = true;
+                    <div class="text-danger small p-3 rounded" style="background: rgba(220, 53, 69, 0.1); border-left: 3px solid #dc3545;">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>No access to this Business Unit.
+                    </div>
+                }
+
+                @if (!hasActions)
+                {
+                    <div class="text-center p-4 text-muted">
+                        <i class="bi bi-inbox fs-1 mb-2 opacity-50"></i>
+                        <p class="mb-0 small fw-medium">No actions available for your role at this time.</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+    <div class="card" id="reviewCard" style="display:none"><div class="card-header"><h6 class="mb-0">Review</h6></div><div class="card-body">
+        <div class="mb-3"><label class="form-label">Remarks</label><textarea class="form-control" id="rRemarks" rows="3"></textarea></div>
+        <button class="btn btn-success btn-sm rounded-pill me-1" onclick="review('Approve')"><i class="bi bi-check-lg me-1"></i>Approve</button>
+        <button class="btn btn-warning btn-sm rounded-pill me-1" onclick="review('SendBack')"><i class="bi bi-arrow-return-left me-1"></i>Send Back</button>
+        <button class="btn btn-danger btn-sm rounded-pill" onclick="review('Reject')"><i class="bi bi-x-lg me-1"></i>Reject</button>
+    </div></div>
+</div></div>
+@section scripts {
+<script>
+const riskId = @Model.RiskId;
+const impactBadge={'High':'bg-danger','Medium':'bg-warning text-dark','Low':'bg-success'};
+const statusBadge={'Draft':'bg-secondary','Submitted':'bg-primary','UnderReview':'bg-info','Approved':'bg-success','Rejected':'bg-danger','RevisionRequired':'bg-warning text-dark','Closed':'bg-dark'};
+
+function loadRisk(){
+    // Use /full to get all wizard sections in one call
+    apiCall('GET',`/api/risk/${riskId}/full`).then(r=>{
+        if(!r||!r.success){
+            // Fallback to existing endpoint if /full not available yet (tables not migrated)
+            return apiCall('GET',`/api/risk/${riskId}`).then(r2=>{ if(r2&&r2.success) renderCore(r2.data); });
+        }
+        const d=r.data;
+        if(d.core)    renderCore(d.core);
+        if(d.people)  renderPeople(d.people);
+        if(d.assessment) renderAssessment(d.assessment);
+        if(d.ratings && d.ratings.length)  renderRatings(d.ratings);
+        if(d.attachments && d.attachments.length) renderAttachments(d.attachments);
+        if(d.history && d.history.length)   renderHistory(d.history);
+    });
+}
+
+function renderCore(k){
+    if(k.history && k.history.length) renderHistory(k.history);
+    const sb=document.getElementById('statusBadge');
+    if(sb){sb.className=`badge rounded-pill ${statusBadge[k.status]||'bg-secondary'}`;sb.textContent=k.status;}
+    const imp=document.getElementById('dImpact');
+    if(imp) imp.className=`badge ${impactBadge[k.impactLevel]||'bg-secondary'} rounded-pill`;
+    const like=document.getElementById('dLike');
+    if(like) like.className=`badge ${impactBadge[k.likelihood]||'bg-secondary'} rounded-pill`;
+}
+
+function renderHistory(history){
+    document.getElementById('historyBody').innerHTML=history.map(h=>`
+        <div class="timeline-item"><div class="d-flex justify-content-between">
+        <strong>${h.action||h.newStatus}</strong>
+        <small class="text-muted">${new Date(h.changedDate).toLocaleString()}</small></div>
+        <p class="mb-1"><span class="badge bg-secondary rounded-pill">${h.oldStatus||'—'}</span> →
+        <span class="badge bg-primary rounded-pill">${h.newStatus}</span></p>
+        ${h.remarks?`<p class="text-muted mb-0 small">${h.remarks}</p>`:''}
+        <small class="text-muted">by ${h.changedByName}</small><hr/></div>`).join('');
+}
+
+function renderPeople(p){
+    document.getElementById('peopleBody').innerHTML=`
+        <div class="row g-3">
+            <div class="col-md-6"><strong>Owner:</strong><br/>${p.ownerName||'—'} <small class="text-muted">(${p.ownerUsername||''})</small></div>
+            <div class="col-md-6"><strong>Champion:</strong><br/>${p.championName||'—'} <small class="text-muted">(${p.championUsername||''})</small></div>
+        </div>`;
+    document.getElementById('peopleCard').style.display='';
+}
+
+function renderAssessment(a){
+    document.getElementById('assessmentBody').innerHTML=`
+        <div class="row g-3">
+            <div class="col-md-6"><strong>Response Measure:</strong><br/><p class="text-muted">${a.responseMeasure||'—'}</p></div>
+            <div class="col-md-6"><strong>Current Controls:</strong><br/><p class="text-muted">${a.currentControls||'—'}</p></div>
+            <div class="col-md-6"><strong>Line of Action:</strong><br/><p class="text-muted">${a.lineOfAction||'—'}</p></div>
+            <div class="col-md-3"><strong>Team:</strong><br/>${a.responsibleTeam||'—'}</div>
+            <div class="col-md-3"><strong>Target Date:</strong><br/>${a.targetDate?new Date(a.targetDate).toLocaleDateString():'—'}</div>
+            <div class="col-md-3"><strong>Frequency:</strong><br/>${a.frequencyName||a.frequencyId||'—'}</div>
+        </div>`;
+    document.getElementById('assessmentCard').style.display='';
+}
+
+function renderRatings(ratings){
+    const rows=ratings.map(q=>`
+        <tr><td><span class="badge bg-info text-dark">${q.quarter}</span></td>
+        <td>${q.grossImpact||'—'}</td><td>${q.grossLikelihood||'—'}</td>
+        <td><strong>${q.grossScore||0}</strong></td><td>${q.grossRating||'—'}</td>
+        <td>${q.residualImpact||'—'}</td><td>${q.residualLikelihood||'—'}</td>
+        <td><strong>${q.residualScore||0}</strong></td><td>${q.residualRating||'—'}</td></tr>`).join('');
+    document.getElementById('ratingsBody').innerHTML=`
+        <div class="table-responsive">
+        <table class="table table-sm table-bordered mb-0">
+            <thead class="table-light"><tr>
+                <th>Quarter</th>
+                <th colspan="4" class="text-center">Gross Risk</th>
+                <th colspan="4" class="text-center">Residual Risk</th>
+            </tr><tr>
+                <th></th>
+                <th>Impact</th><th>Likelihood</th><th>Score</th><th>Rating</th>
+                <th>Impact</th><th>Likelihood</th><th>Score</th><th>Rating</th>
+            </tr></thead>
+            <tbody>${rows}</tbody>
+        </table></div>`;
+    document.getElementById('ratingsCard').style.display='';
+}
+
+function renderAttachments(atts){
+    document.getElementById('attachmentsBody').innerHTML=atts.map(a=>`
+        <div class="d-flex align-items-center justify-content-between border rounded p-2 mb-2">
+            <div><i class="bi bi-paperclip me-2"></i><strong>${a.fileName}</strong>
+            <small class="text-muted ms-2">${(a.fileSize/1024).toFixed(1)} KB</small>
+            <small class="text-muted ms-2">by ${a.uploadedByName}</small></div>
+            <a href="${a.filePath}" target="_blank" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-download"></i>
+            </a>
+        </div>`).join('');
+    document.getElementById('attachmentsCard').style.display='';
+}
+
+function submitRisk(id){
+    id=id||riskId;
+    apiCall('POST',`/api/risk/submit/${id}`).then(r=>{
+        showToast(r.message,r.success?'success':'danger');
+        if(r.success) setTimeout(()=>window.location.reload(),1500);
+    })
+}
+function closeRisk(id){
+    id=id||riskId;
+    apiCall('POST',`/api/risk/close/${id}`).then(r=>{
+        showToast(r.message,r.success?'success':'danger');
+        if(r.success) setTimeout(()=>window.location.reload(),1500);
+    })
+}
+document.addEventListener('DOMContentLoaded',loadRisk);
+</script>}
+

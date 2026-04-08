@@ -1,0 +1,93 @@
+/* Dark mode overrides - Modern Premium Dark Theme */
+[data-theme="dark"] {
+    /* Antigravity (AI/DeepMind) Premium Dark Theme */
+    --bg-color: #131314;
+    --bg-gradient: #131314;
+    
+    /* Dark Glass Surfaces */
+    --surface: rgba(37, 37, 38, 0.85); 
+    --surface-solid: #252526;
+    
+    /* Text */
+    --text: #e3e3e3;
+    --text-muted: #9aa0a6;
+    --bs-heading-color: #ffffff;
+    --bs-body-color: #e3e3e3;
+    
+    /* Borders */
+    --border: rgba(255, 255, 255, 0.1);
+    --border-light: rgba(255, 255, 255, 0.05);
+    
+    /* Shadows */
+    --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.6), 0 10px 10px -5px rgba(0, 0, 0, 0.4);
+    
+    /* VS Code Blue */
+    --primary: #007acc;
+    --primary-light: #3794ff;
+}
+
+[data-theme="dark"] h1, [data-theme="dark"] h2, [data-theme="dark"] h3, 
+[data-theme="dark"] h4, [data-theme="dark"] h5, [data-theme="dark"] h6 {
+    color: var(--text);
+}
+
+/* Decorative Background Elements for Dark Mode - Disabled for pure black theme */
+[data-theme="dark"] body::before, [data-theme="dark"] body::after {
+    display: none;
+}
+
+[data-theme="dark"] .topnav { background: var(--surface); border-bottom-color: var(--border); }
+[data-theme="dark"] .theme-toggle, [data-theme="dark"] .user-dropdown { background: rgba(255,255,255,0.05); color: var(--text) !important; }
+[data-theme="dark"] .theme-toggle:hover, [data-theme="dark"] .user-dropdown:hover { background: rgba(255,255,255,0.1); }
+
+/* Ensure sidebar inherits light mode blue gradient by NOT overriding its background */
+[data-theme="dark"] .sidebar {
+    border-right-color: var(--border);
+}
+
+[data-theme="dark"] .card { background: var(--surface); border-color: var(--border-light); }
+[data-theme="dark"] .card-header { border-bottom-color: var(--border); }
+
+[data-theme="dark"] .table { color: var(--text); --bs-table-bg: transparent; --bs-table-color: var(--text); }
+[data-theme="dark"] .table th { color: var(--text-muted); border-bottom-color: var(--border); }
+[data-theme="dark"] .table td { border-bottom-color: var(--border); color: var(--text); }
+[data-theme="dark"] .table tbody tr:hover td { background-color: rgba(255, 255, 255, 0.04); }
+
+[data-theme="dark"] .form-control, [data-theme="dark"] .form-select { 
+    background: rgba(30, 30, 30, 0.8); 
+    border-color: var(--border); 
+    color: var(--bs-heading-color); 
+}
+[data-theme="dark"] .form-control::placeholder {
+    color: rgba(255,255,255,0.4) !important;
+}
+[data-theme="dark"] .form-control:-webkit-autofill,
+[data-theme="dark"] .form-select:-webkit-autofill {
+    transition: background-color 5000s ease-in-out 0s;
+    -webkit-text-fill-color: var(--bs-heading-color) !important;
+}
+[data-theme="dark"] .form-control:focus, [data-theme="dark"] .form-select:focus { 
+    background: #1e1e1e; 
+    border-color: var(--primary); 
+    box-shadow: 0 0 0 3px rgba(0, 122, 204, 0.2);
+}
+
+[data-theme="dark"] .modal-content { background: var(--surface-solid); color: var(--text); border: 1px solid var(--border); box-shadow: var(--shadow-lg); }
+[data-theme="dark"] .modal-header { border-bottom-color: var(--border); }
+[data-theme="dark"] .modal-footer { border-top-color: var(--border); }
+[data-theme="dark"] .btn-close { filter: invert(1) grayscale(100%) brightness(200%); }
+
+[data-theme="dark"] .dropdown-menu { background: var(--surface-solid); border-color: var(--border); }
+[data-theme="dark"] .dropdown-item { color: var(--text); }
+[data-theme="dark"] .dropdown-item:hover { background: rgba(255,255,255,0.1); color: #fff; }
+
+/* KPI Cards in Dark Mode */
+[data-theme="dark"] .kpi-card::before {
+    background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%);
+}
+[data-theme="dark"] .kpi-card:hover { box-shadow: var(--shadow-lg); }
+[data-theme="dark"] .text-muted { color: var(--text-muted) !important; }
+
+/* Timeline dark mode */
+[data-theme="dark"] .timeline-item hr { border-color: var(--border); }
