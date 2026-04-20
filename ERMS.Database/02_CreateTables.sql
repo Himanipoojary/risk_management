@@ -1,4 +1,4 @@
-USE `risk_management_db`;
+USE `erm_db`;
 
 -- 1. User_Master
 CREATE TABLE IF NOT EXISTS `User_Master` (

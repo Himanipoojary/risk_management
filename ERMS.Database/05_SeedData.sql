@@ -1,4 +1,4 @@
-USE `risk_management_db`;
+USE `erm_db`;
 
 -- Fiscal Years
 INSERT INTO `FY_Master`(`FYId`,`FYName`,`FromDate`,`ToDate`) VALUES

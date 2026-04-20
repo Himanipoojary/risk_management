@@ -1,5 +1,5 @@
-CREATE DATABASE IF NOT EXISTS `ERM_DB`
+CREATE DATABASE IF NOT EXISTS `erm_db`
 CHARACTER SET utf8mb4
 COLLATE utf8mb4_general_ci;
 
-USE `risk_management_db`;
+USE `erm_db`;

@@ -1,9 +1,9 @@
 -- ============================================================
 -- ERMS Risk Wizard Extension — Migration Script
--- Run once on risk_management_db
+-- Run once on erm_db
 -- ============================================================
 
-USE risk_management_db;
+USE erm_db;
 
 -- ─────────────────────────────────────────────────────────────
 -- TABLE 1: Risk_PeopleOverview  (Step 2)

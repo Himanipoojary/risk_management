@@ -1,4 +1,4 @@
-USE `risk_management_db`;
+USE `erm_db`;
 
 DELIMITER $$
 CREATE TRIGGER `TRG_UserPermission_Insert`
