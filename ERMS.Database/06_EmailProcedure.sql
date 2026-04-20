@@ -2,6 +2,8 @@
 -- Result set 1: Risk Owner details + risk info
 -- Result set 2: All active Champions for the BU of this risk
 
+USE `erm_db`;
+
 DELIMITER $$
 CREATE PROCEDURE IF NOT EXISTS sp_Risk_GetEmailRecipients(IN p_RiskId INT)
 BEGIN
